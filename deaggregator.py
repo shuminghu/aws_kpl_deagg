@@ -45,11 +45,11 @@ def _create_user_record(ehks, pks, mr, r, sub_seq_num):
     new_record['kinesis'] = {}
     
     #Copy all the metadata from the original record (except the data-specific stuff)
-    for key, value in r.iteritems():
-        if key != 'kinesis':
-            new_record[key] = value
-    new_record['kinesis']['kinesisSchemaVersion'] = r['kinesis']['kinesisSchemaVersion']
-    new_record['kinesis']['sequenceNumber'] = r['kinesis']['sequenceNumber']
+    #for key, value in r.iteritems():
+    #    if key != 'kinesis':
+    #        new_record[key] = value
+    #new_record['kinesis']['kinesisSchemaVersion'] = r['kinesis']['kinesisSchemaVersion']
+    new_record['kinesis']['sequenceNumber'] = r['SequenceNumber']
     
     #Fill in the new values        
     new_record['kinesis']['explicitHashKey'] = explicit_hash_key
@@ -58,7 +58,8 @@ def _create_user_record(ehks, pks, mr, r, sub_seq_num):
     new_record['kinesis']['aggregated'] = True
     
     #We actually re-base64-encode the data because that's how Lambda Python normally delivers records
-    new_record['kinesis']['data'] = base64.b64encode(mr.data)
+    #new_record['kinesis']['data'] = base64.b64encode(mr.data)
+    new_record['kinesis']['data'] = mr.data
     
     return new_record
 
@@ -89,7 +90,7 @@ def _get_error_string(r, message_data, ehks, pks, ar):
                         mr.explicit_hash_key_index,
                         mr.partition_key_index,
                         len(mr.data)))
-    error_buffer.write('Sequence number: %s\n' % (r['kinesis']['sequenceNumber']))
+    error_buffer.write('Sequence number: %s\n' % (r['SequenceNumber']))
     error_buffer.write('Raw data: %s\n' % (base64.b64encode(message_data)))
     
     return error_buffer.getvalue()
@@ -130,7 +131,7 @@ def iter_deaggregate_records(records):
         sub_seq_num = 0
         
         #Decode the incoming data
-        raw_data = r['kinesis']['data']
+        raw_data = r['Data']
         decoded_data = base64.b64decode(raw_data)
         
         #Verify the magic header
